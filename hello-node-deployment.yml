@@ -1,0 +1,60 @@
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  labels:
+    app: hello-node
+  name: hello-node
+spec:
+  replicas: 10
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: hello-node
+  template:
+    metadata:
+      labels:
+        app: hello-node
+      # Comment the following annotation if Dashboard must not be deployed on master
+      annotations:
+        scheduler.alpha.kubernetes.io/tolerations: |
+          [
+            {
+              "key": "dedicated",
+              "operator": "Equal",
+              "value": "master",
+              "effect": "NoSchedule"
+            }
+          ]
+    spec:
+      containers:
+      - name: hello-node
+        image: castronu/hellond:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8085
+          protocol: TCP
+        args:
+          # Uncomment the following line to manually specify Kubernetes API server Host
+          # If not specified, Dashboard will attempt to auto discover the API server and connect
+          # to it. Uncomment only if the default does not work.
+          # - --apiserver-host=http://my-address:port
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8085
+          initialDelaySeconds: 30
+          timeoutSeconds: 30
+---
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: hello-node
+  name: hello-node
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    targetPort: 8085
+  selector:
+    app: hello-node
