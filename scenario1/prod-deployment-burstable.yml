@@ -1,0 +1,42 @@
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  labels:
+    app: kuar-burstable
+  name: kuar-burstable
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: kuar-burstable
+  template:
+    metadata:
+      labels:
+        app: kuar-burstable
+      # Comment the following annotation if Dashboard must not be deployed on master
+      annotations:
+        scheduler.alpha.kubernetes.io/tolerations: |
+          [
+            {
+              "key": "dedicated",
+              "operator": "Equal",
+              "value": "master",
+              "effect": "NoSchedule"
+            }
+          ]
+    spec:
+      nodeSelector:
+            kubernetes.io/hostname: worker2.vagrant.vm
+      containers:
+      - name: kuard
+        image: gcr.io/kuar-demo/kuard-amd64:1
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "0.1Gi"
+            cpu: "0.1"
+          limits:
+            memory: "1.6Gi"
+            cpu: "1"
+
